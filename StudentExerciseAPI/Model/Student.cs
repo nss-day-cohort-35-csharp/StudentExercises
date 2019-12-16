@@ -27,7 +27,7 @@ namespace StudentExerciseAPI.Model
         public int CohortId { get; set; }
 
 
-        public List<Exercise> Exercises { get; set; }
+        public List<Exercise> Exercises { get; set; } = new List<Exercise>();
     }
 }
 
