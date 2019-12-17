@@ -20,5 +20,7 @@ namespace StudentExerciseAPI.Model
         public string Name { get; set; }
         public string Language { get; set; }
 
+        public List<Student> Students { get; set; }
+
     }
 }

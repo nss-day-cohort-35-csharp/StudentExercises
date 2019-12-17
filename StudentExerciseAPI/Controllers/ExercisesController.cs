@@ -5,6 +5,7 @@ using StudentExerciseAPI.Model;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace StudentExerciseAPI.Controllers
@@ -30,29 +31,75 @@ namespace StudentExerciseAPI.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get(string include, string search)
         {
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT Id, Name, Language FROM Exercise";
+                    cmd.CommandText = @"SELECT Exercise.Id as ExerciseID, Exercise.Name as ExerciseName, Exercise.Language as ExerciseLanguage";
+                    if (include == "students")
+                    {
+                        cmd.CommandText += @", se.StudentId as StudentExerciseStudentID, se.exerciseId as StudentExerciseExerciseID, 
+                        s.Id, s.FirstName, s.LastName, s.SlackHandle";
+                    }
+                    cmd.CommandText += " FROM Exercise";
+                    if (include == "students")
+                    {
+                        cmd.CommandText += @" LEFT JOIN Studentexercise as se ON Exercise.Id = se.exerciseId
+                                              INNER JOIN Student as s ON se.studentId = s.Id";
+                    }
+                    if (search != null)
+                    {
+                        cmd.CommandText += $" WHERE exercise.Name LIKE '%{search}%' OR exercise.Language LIKE '%{search}%'";
+                    }
+
                     SqlDataReader reader = cmd.ExecuteReader();
                     List<Exercise> exercises = new List<Exercise>();
 
                     while (reader.Read())
                     {
 
-                        int idValue = reader.GetInt32(reader.GetOrdinal("Id"));
-                        string nameValue = reader.GetString(reader.GetOrdinal("Name"));
-                        string languageValue = reader.GetString(reader.GetOrdinal("Language"));
+                        int currentExerciseID = reader.GetInt32(reader.GetOrdinal("ExerciseID"));
+                        Exercise newExercise = exercises.FirstOrDefault(e => e.Id == currentExerciseID);
 
-                        Exercise exercise = new Exercise(idValue, nameValue, languageValue);
+                        string nameValue = reader.GetString(reader.GetOrdinal("ExerciseName"));
+                        string languageValue = reader.GetString(reader.GetOrdinal("ExerciseLanguage"));
+
+                        if (newExercise == null)
+                        {
+                            newExercise = new Exercise(currentExerciseID, nameValue, languageValue);
+                        }
 
 
-                        exercises.Add(exercise);
+
+
+
+
+
+                        exercises.Add(newExercise);
                     }
+
+                    if (include == "students")
+                    {
+
+                        int currentStudentID = reader.GetInt32(reader.GetOrdinal("Id"));
+                        foreach (Exercise exer in exercises)
+                        {
+                            if (exer.Id == reader.GetInt32(reader.GetOrdinal("StudentExerciseExerciseID")) && exer.Students.FirstOrDefault(s => s.Id == currentStudentID) == null)
+                            {
+                                exer.Students.Add(new Student
+                                {
+                                    Id = currentStudentID,
+                                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                    LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                    SlackHandle = reader.GetString(reader.GetOrdinal("SlackHandle")),
+                                });
+                            }
+                        }
+                    }
+
                     reader.Close();
 
                     return Ok(exercises);
@@ -85,7 +132,7 @@ namespace StudentExerciseAPI.Controllers
                         string languageValue = reader.GetString(reader.GetOrdinal("Language"));
 
                         exercise = new Exercise(idValue, nameValue, languageValue);
-                       
+
 
                     };
                     reader.Close();
