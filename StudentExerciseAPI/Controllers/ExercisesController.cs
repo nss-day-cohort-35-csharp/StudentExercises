@@ -70,35 +70,32 @@ namespace StudentExerciseAPI.Controllers
                         if (newExercise == null)
                         {
                             newExercise = new Exercise(currentExerciseID, nameValue, languageValue);
+                            newExercise.Students = new List<Student>();
                         }
 
-
-
-
-
-
-
                         exercises.Add(newExercise);
-                    }
 
-                    if (include == "students")
-                    {
-
-                        int currentStudentID = reader.GetInt32(reader.GetOrdinal("Id"));
-                        foreach (Exercise exer in exercises)
+                        if (include == "students")
                         {
-                            if (exer.Id == reader.GetInt32(reader.GetOrdinal("StudentExerciseExerciseID")) && exer.Students.FirstOrDefault(s => s.Id == currentStudentID) == null)
+
+                            int currentStudentID = reader.GetInt32(reader.GetOrdinal("Id"));
+                            foreach (Exercise exer in exercises)
                             {
-                                exer.Students.Add(new Student
+                                if (exer.Id == reader.GetInt32(reader.GetOrdinal("StudentExerciseExerciseID")) && exer.Students.FirstOrDefault(s => s.Id == currentStudentID) == null)
                                 {
-                                    Id = currentStudentID,
-                                    FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                                    LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                                    SlackHandle = reader.GetString(reader.GetOrdinal("SlackHandle")),
-                                });
+                                    exer.Students.Add(new Student
+                                    {
+                                        Id = currentStudentID,
+                                        FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
+                                        LastName = reader.GetString(reader.GetOrdinal("LastName")),
+                                        SlackHandle = reader.GetString(reader.GetOrdinal("SlackHandle")),
+                                    });
+                                }
                             }
                         }
                     }
+
+                    
 
                     reader.Close();
 

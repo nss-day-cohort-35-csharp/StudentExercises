@@ -1,26 +1,16 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace StudentExerciseAPI.Model
 {
     public class Student
     {
-
-
-
-        /*
-        public Student(int id, string firstName, string lastname, string slack, Cohort cohort)
-        {
-            Id = id;
-            FirstName = firstName;
-            LastName = lastname;
-            SlackHandle = slack;
-            CohortId = cohort;
-        }
-        */
-
         public int Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
+
+        [Required(ErrorMessage = "A student must have a slack handle")]
+        [StringLength(12, MinimumLength = 3, ErrorMessage = "Slack handle must be between 3 and 12 characters")]
         public string SlackHandle { get; set; }
         public Cohort Cohort { get; set; }
 
